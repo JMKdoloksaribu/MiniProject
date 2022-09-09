@@ -37,5 +37,10 @@ namespace MiniProject.Service.Services
             T result = await _db.QuerySingleAsync<T>(command, param);
             return result;
         }
+        public async Task<bool> Check(string command, object param)
+        {
+            var result = await _db.ExecuteScalarAsync<bool>(command, param);
+            return result;
+        }
     }
 }

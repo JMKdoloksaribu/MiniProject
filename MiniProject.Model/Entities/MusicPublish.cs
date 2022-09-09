@@ -12,7 +12,7 @@ namespace MiniProject.Model.Entities
         public string Judul { get; set; }
         public string Genre { get; set; }
         public string Penyanyi { get; set; }
-        public List<int> Publish { get; set; }
+        public string Publish { get; set; }
         public int TahunRilis { get; set; }
     }
 }

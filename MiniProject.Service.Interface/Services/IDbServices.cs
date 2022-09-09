@@ -11,5 +11,6 @@ namespace MiniProject.Service.Interface.Services
         Task<int> ModifyData(string command, object param);
         Task<List<T>> GetData<T>(string command, object param);
         Task<T> Get<T>(string command, object param);
+        Task<bool> Check(string command, object param);
     }
 }

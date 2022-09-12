@@ -8,6 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MiniProject.Model.Entities;
 
 namespace MiniProject.Service.Services
 {
@@ -26,20 +27,21 @@ namespace MiniProject.Service.Services
             return result;
         }
 
-        public async Task<int> ModifyData(string command, object param)
+        public async Task<int> InsertData(string command, object param)
         {
             var result = await _db.ExecuteAsync(command, param);
             return result;
         }
 
-        public async Task<T> Get<T>(string command, object param)
+        public async Task<int> DeleteMusic(string command, object param)
         {
-            T result = await _db.QuerySingleAsync<T>(command, param);
+            var result = await _db.ExecuteAsync(command, param);
             return result;
         }
-        public async Task<bool> Check(string command, object param)
+
+        public async Task<int> DeletePublish(string command, object param)
         {
-            var result = await _db.ExecuteScalarAsync<bool>(command, param);
+            var result = await _db.ExecuteAsync(command, param);
             return result;
         }
     }

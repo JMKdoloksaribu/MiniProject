@@ -9,6 +9,6 @@ namespace MiniProject.Model.Entities
     public class Publish
     {
         public int Id { get; set; }
-        public string Nama { get; set; }
+        public List<string> Nama { get; set; }
     }
 }

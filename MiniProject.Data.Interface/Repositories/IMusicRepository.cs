@@ -9,15 +9,16 @@ namespace MiniProject.Data.Interface.Repositories
 {
     public interface IMusicRepository
     {
-        public Task<bool> Create(int Id, string Judul, string Penyanyi, string Genre, int TahunRilis);
-        public Task<List<Music>> GetAll();
-        public Task<bool> Update(int Id, string Judul, string Penyanyi, string Genre, int TahunRilis);
+        public Task<bool> CreateMusic(Music model);
+        public Task<bool> CreatePublish(string mediapublish, int Id);
+        public Task<bool> CreateMusicPublish(string mediapublish, int Id );
+        public Task<List<MusicPublish>> GetAll(int page);
+        public Task<List<int>> GetMusic(int Id);
+        public Task<List<MusicPublish>> GetPublish(string mediapublish);
+        public Task<List<string>> PublishGet();
+        public Task<Music> UpdateMusic(Music model);
+        public Task<bool> UpdatePublish(string mediapublish, int Id);
         public Task<bool> Delete(int Id);
-        public Task<List<Music>> GetPublish(string Publish2);
-        public Task<bool> CheckPublish(string Judul);
-        public Task<bool> CheckRelation(int Music_id, int Publish_id);
-        public Task<int> GetId(string variableJudul, string Judul);
-        public Task<bool> RelateMusicPublish(int MusicId, int PublishId);
-        public Task<List<string>> GetPublisher(int Id);
+        public Task<bool> DeleteMP(int Id);
     }
 }

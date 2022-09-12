@@ -10,10 +10,11 @@ namespace MiniProject.Service.Interface.Services
 {
     public interface IMusicServices
     {
-        public Task<bool> Create(int Id, string Judul, string Penyanyi, string Genre, int TahunRilis, string[] Publish);
-        public Task<List<Music>> GetAll();
-        public Task<bool> Update(Music model, int Id);
+        public Task<bool> Create(Music model);
+        public Task<List<MusicPublish>> Get(int page);
+
+        public Task<bool> Update(Music model);
         public Task<bool> Delete(int Id);
-        public Task<List<Music>> GetPublish(string Publish2); 
+        public Task<List<MusicPublish>> GetMediaPublish(string publishmedia); 
     }
 }

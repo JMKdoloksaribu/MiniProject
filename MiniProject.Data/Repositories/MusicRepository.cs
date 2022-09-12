@@ -1,14 +1,13 @@
 ﻿using MiniProject.Data.Interface.Repositories;
 using MiniProject.Model.Entities;
 using MiniProject.Service.Interface.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using MiniProject.Service.Services;
 using MySqlX.XDevAPI.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace MiniProject.Data.Repositories
 {
@@ -20,90 +19,101 @@ namespace MiniProject.Data.Repositories
         {
             _dbServices = dbServices;
         }
-        public async Task<bool> Create(int Id, string Judul, string Penyanyi, string Genre, int TahunRilis)
+        public async Task<bool> CreateMusic(Music model)
         {
-            await _dbServices.ModifyData("Insert into Music" +
-                "( Id, Judul, Genre, Penyanyi, TahunRilis)" +
-                " values" +
-                "( @Id, @Judul, @Genre, @Penyanyi, @TahunRilis);", new { Id=Id, Judul = Judul, Penyanyi = Penyanyi, Genre = Genre, TahunRilis=TahunRilis });
+            await _dbServices.InsertData("Insert into Music " +
+                "( Id, Nama, Genre, Penyanyi, TahunRilis ) " +
+                " values " +
+                "( @Id, @Nama, @Genre, @Penyanyi, @TahunRilis);", model);
             return true;
         }
+
+        public async Task<bool> CreatePublish(string mediapublish, int Id)
+        {
+            await _dbServices.InsertData("Insert into Publish ( Id, Nama ) " +
+                " values " +
+                " (( select p.Id from Publish p order by p.Id DESC limit 1)+1,@mediapublish ) ;" +
+                " Insert into Music_has_Publish mp (Music_id, Publish_id ) " +
+                " values " +
+                " (@Id,(select p.Id from Publish p order by p.Id DESC limit 1));", new { mediapublish, Id }); ;
+            return true;
+        }
+
+        public async Task<bool> CreateMusicPublish(string mediapublish, int Id)
+        {
+            await _dbServices.InsertData("Insert into Music_has_Publish ( Music_id, Publish_id ) " +
+                " values " +
+                " (@Id,(select p.Id from Publish p where p.Nama = @mediapublish));", new { mediapublish, Id });
+            return true;
+        }
+
 
         public async Task<bool> Delete(int Id)
         {
-            await _dbServices.ModifyData("delete from Music_has_Publish mp where mp.Music_id=@Id;", new { Id });
-            await _dbServices.ModifyData("delete from Music m where m.Id=@Id;", new { Id });
+            await _dbServices.DeletePublish("delete from Music_has_Publish mp where mp.Music_id=@Id;", new { Id });
+            await _dbServices.DeleteMusic("delete from Music m where m.Id=@Id;", new { Id });
             return true;
         }
 
-
-        public async Task<List<Music>> GetAll()
+        public async Task<bool> DeleteMP(int Id)
         {
-            var result = await _dbServices.GetData<Music>
-                ("select m.Id, m.Judul, m.Penyanyi, m.TahunRilis, m.Genre" +
-                " from Music m" +
-                " join Music_has_Publish mp" +
-                " on m.Id = mp.Music_id" +
-                " join Publish p" +
-                " on mp.Publish_id = p.Id" +
-                " group by m.Id limit 10;", new {});
-            return result;
-        }
-
-        public async Task<List<string>> GetPublisher(int Id)
-        {
-            var result = await _dbServices.GetData<string>("select p.Nama from Music m " +
-                " join Music_has_Publish mp on m.Id=mp.Publish_id" +
-                " join Publish p on mp.Music_id=p.Id" +
-                " where m.Id=@Id", new { Id=Id });
-            return result;
-        }
-
-        public async Task<bool> Update(int Id, string Judul, string Penyanyi, string Genre, int TahunRilis)
-        {
-            await _dbServices.ModifyData("update Music" +
-                " set Judul=@Judul, Penyanyi=@Penyanyi, Genre=@Genre, TahunRilis=@TahunRilis" +
-                " where Id=@Id;", new { Id, Judul, Genre, Penyanyi, TahunRilis });
+            await _dbServices.DeletePublish("delete from Music_has_Publish mp " +
+                " where mp.Music_id = @Id;", new { Id });
             return true;
         }
 
-        public async Task<List<Music>> GetPublish(string Publish2)
+        public async Task<List<MusicPublish>> GetAll(int page)
         {
-            var result = await _dbServices.GetData<Music>
-                ("select m.Id, m.Judul, m.Penyanyi, m.Genre, m.TahunRilis" +
+            var result = await _dbServices.GetData<MusicPublish>(
+                " select m.Id, m.Nama, m.Penyanyi, m.TahunRilis, m.Genre, group_concat(p.Nama) Publish " +
                 " from Music m " +
-                " join Music_has_Publish mp on m.Id=mp.Publish_id" +
-                " join Publish p on mp.Music_id=p.Id" +
-                " where p.Nama like @Publish2" +
-                " group by m.Id;", new {Publish2=Publish2 });
+                " join Music_has_Publish mp " +
+                " on m.Id = mp.Music_id " +
+                " join Publish p " +
+                " on mp.Publish_id = p.Id " +
+                " where m.Id > (10*(@page-1)) and m.Id <= (10*@page) group by m.Id;", new { page });
             return result;
         }
 
-        public async Task<bool> CheckPublish(string Judul)
+        public async Task<List<int>> GetMusic(int Id)
         {
-            var result = await _dbServices.Check("select count(1) from Music" +
-                " where Judul=@Judul", new { Judul=Judul });
+            var result = await _dbServices.GetData<int>(
+                " select m.Id from Music m where m.Id = @Id;", new { Id });
+            return result;
+        }
+        public async Task<List<MusicPublish>> GetPublish(string mediapublish)
+        {
+            var result = await _dbServices.GetData<MusicPublish>(
+                " select m.Id, m.Nama, m.Penyanyi, m.TahunRilis, group_concat(p.Nama) Publish " +
+                " from Music m " +
+                " join Music_has_Publish mp " +
+                " on m.Id = mp.Music_id " +
+                " join Publish p " +
+                " on mp.Publish_id = p.Id " +
+                " where p.Nama = @mediapublish group by m.Id;", new { mediapublish });
+            return result;
+        }
+        public async Task<List<string>> PublishGet()
+        {
+            List<string> result = await _dbServices.GetData<string>(
+                " select p.Nama from Publish p;", new { });
             return result;
         }
 
-        public async Task<bool> CheckRelation(int Music_id, int Publish_id)
+        public async Task<Music> UpdateMusic(Music model)
         {
-            var result = await _dbServices.Check("select count(1) from Music_has_Publish" +
-                " where Music_id=@Music_id and Publish_id=@Publish_id", new { Music_id = Music_id, Publish_id=Publish_id});
-            return result;
+            await _dbServices.InsertData("update Music " +
+                " set Nama=@Nama, Penyanyi=@Penyanyi, TahunRilis=@TahunRilis, Genre=@Genre " +
+                " where Id=@Id;", model);
+            return model;
         }
-
-        public async Task<bool> RelateMusicPublish(int MusicId, int PublishId)
+        public async Task<bool> UpdatePublish(string mediapublish, int Id)
         {
-            await _dbServices.ModifyData("insert into Music_has_Publish" +
-                " values (@Music_id,@Publish_id);", new { Music_id=MusicId, Publish_id=PublishId });
+            await _dbServices.InsertData(
+                " insert into Music_has_Publish (Music_id, Publish_id ) " +
+                " values (@Id,(select p.id from Publish p where p.Nama = @mediapublish));",
+                new { mediapublish, Id });
             return true;
-        }
-
-        public async Task<int> GetId(string variableJudul, string Judul)
-        {
-            int Id = await _dbServices.Get<int>("select Id from " + variableJudul +  " where Judul=@Judul", new { Judul=Judul });
-            return Id;
         }
     }
 }

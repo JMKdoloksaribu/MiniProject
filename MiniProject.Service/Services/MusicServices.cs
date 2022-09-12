@@ -20,63 +20,66 @@ namespace MiniProject.Service.Services
             this.musicRepository = musicRepository;
         }
 
-        public async Task<bool> Create(int Id, string Judul, string Penyanyi, string Genre, int TahunRilis, string[] Publish)
+        public async Task<bool> Create(Music model)
         {
-            if (await musicRepository.CheckPublish(Judul) == true)
+            Publish publish = new Publish();
+            publish.Nama = model.Publish;
+            int Id = model.Id;
+            await musicRepository.CreateMusic(model);
+            List<string> data = await musicRepository.PublishGet();
+            Publish publishData = new Publish();
+            publishData.Nama = data;
+
+            foreach (string mediapublish in publish.Nama)
             {
-                return false;
+                if (!publishData.Nama.Contains(mediapublish))
+                {
+                    await musicRepository.CreatePublish(mediapublish, Id);
+                }
+                else if (publishData.Nama.Contains(mediapublish))
+                {
+                    await musicRepository.CreateMusicPublish(mediapublish, Id);
+                }
             }
-            var result = await musicRepository.Create(Id, Judul, Penyanyi, Genre, TahunRilis);
-            int MusicId = await musicRepository.GetId("music", Judul);
-            foreach (string p in Publish)
-            {
-                int PublishId = await musicRepository.GetId("publish", p);
-                await musicRepository.RelateMusicPublish(MusicId, PublishId);
-            }
-            return result;
+            return true;
         }
 
-
-        public async Task<List<Music>> GetAll()
+        public async Task<List<MusicPublish>> Get(int page)
         {
-            var result = await musicRepository.GetAll();
-            foreach (var p in result)
-            {
-                p.Publish = await musicRepository.GetPublisher(await musicRepository.GetId("music", p.Judul));
-            }
+            List<MusicPublish> result = await musicRepository.GetAll(page);
             return result;
         }
-
         public async Task<bool> Delete(int Id)
         {
             var result = await musicRepository.Delete(Id);
             return result;
         }
 
-        public async Task<List<Music>> GetPublish(String Publish2)
+        public async Task<List<MusicPublish>> GetMediaPublish(String mediapublish)
         {
-            var result = await musicRepository.GetPublish(Publish2);
-            foreach (var p in result)
-            {
-                p.Publish = await musicRepository.GetPublisher(await musicRepository.GetId("music", p.Judul));
-            }
+            List<MusicPublish> result = await musicRepository.GetPublish(mediapublish);
             return result;
         }
 
 
-        public async Task<bool> Update(Music model, int Id)
+        public async Task<bool> Update(Music model)
         {
-            var result = await musicRepository.Update(model.Id, model.Judul, model.Penyanyi, model.Genre, model.TahunRilis);
-            foreach (string p in model.Publish)
+            await musicRepository.UpdateMusic(model);
+            Publish publish = new Publish();
+            publish.Nama = model.Publish;
+            List<string> data = await musicRepository.PublishGet();
+            Publish publishData = new Publish();
+            publishData.Nama = data;
+            await musicRepository.DeleteMP(model.Id);
+            foreach (string mediapublish in publish.Nama)
             {
-                int PublishId = await musicRepository.GetId("publish", p);
-                if (await musicRepository.CheckRelation(Id, PublishId))
+                if (!publishData.Nama.Contains(mediapublish))
                 {
-                    continue;
+                    await musicRepository.CreatePublish(mediapublish, model.Id);
                 }
-                else
+                else if (publishData.Nama.Contains(mediapublish))
                 {
-                    await musicRepository.RelateMusicPublish(Id, PublishId);
+                    await musicRepository.UpdatePublish(mediapublish, model.Id);
                 }
             }
             return true;
